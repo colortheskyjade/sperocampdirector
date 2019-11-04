@@ -4,7 +4,7 @@ const config = require('./config.json');
 const { Client, RichEmbed } = require('discord.js');
 
 const bot = new Client();
-const {reactToMention} = lib;
+const {reactToMention, yesNoBoom} = lib;
 
 bot.on('ready', () => {
   console.log(`[INFO] Logged in as ${bot.user.tag}.`);
@@ -33,6 +33,10 @@ bot.on('message', msg => {
 
   if (msg.author.id === '49395063955914752' && msg.content.startsWith('!DEBUG')) {
     msg.channel.send(new RichEmbed().setTitle('D E B U G'));
+  }
+
+  if (msg.content.startsWith('?y/n ')) {
+    yesNoBoom(bot, msg);
   }
 });
 

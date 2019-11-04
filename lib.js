@@ -2,7 +2,7 @@ const reactToMention = (bot, msg, config) => {
   const targets = Object.keys(config)
     .map(id => msg.guild.member(bot.users.get(id)))
     .filter(Boolean)
-    .filter((user) => msg.isMemberMentioned(user));
+    .filter(user => msg.isMemberMentioned(user));
 
   if (!targets.length) return;
 
@@ -20,6 +20,26 @@ const reactToMention = (bot, msg, config) => {
     });
 };
 
+const yesNoBoom = (bot, msg) => {
+  const answers = [
+    '👍',
+    '👍',
+    '👍',
+    '👍',
+    '👍',
+    '👎',
+    '👎',
+    '👎',
+    '👎',
+    '👎',
+    '585625968970825740',
+  ];
+
+  const reaction = answers[Math.floor(Math.random() * answers.length)];
+  msg.react(reaction);
+};
+
 module.exports = {
   reactToMention: reactToMention,
+  yesNoBoom: yesNoBoom,
 };
