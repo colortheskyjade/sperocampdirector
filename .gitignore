@@ -1,3 +1,6 @@
+# SECRETS OwO
+auth.*
+
 # Logs
 logs
 *.log
