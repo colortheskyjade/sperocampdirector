@@ -4,7 +4,7 @@ const config = require('./config.json');
 const { Client, RichEmbed } = require('discord.js');
 
 const bot = new Client();
-const {reactToMention, yesNoBoom} = lib;
+const {reactToMention, voteButtons, yesOrNo} = lib;
 
 bot.on('ready', () => {
   console.log(`[INFO] Logged in as ${bot.user.tag}.`);
@@ -35,8 +35,11 @@ bot.on('message', msg => {
     msg.channel.send(new RichEmbed().setTitle('D E B U G'));
   }
 
-  if (msg.content.startsWith('?y/n ')) {
-    yesNoBoom(bot, msg);
+  // Do this better later.
+  if (msg.content.startsWith('Q: ')) {
+    yesOrNo(bot, msg);
+  } else if (msg.content.startsWith('Vote: ')) {
+    voteButtons(bot, msg);
   }
 });
 
