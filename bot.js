@@ -8,6 +8,7 @@ const {reactToMention} = lib;
 
 bot.on('ready', () => {
   console.log(`[INFO] Logged in as ${bot.user.tag}.`);
+  bot.user.setActivity('c a m p i n g');
 });
 
 bot.on('disconected', () => {
