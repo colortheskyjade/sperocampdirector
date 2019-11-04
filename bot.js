@@ -34,7 +34,8 @@ bot.on('message', msg => {
   if (msg.author.bot) return;
 
   // TODO: refactor, this will be changed in v12
-  if (msg.isMemberMentioned(msg.guild.member(bot.users.get(react_to_me)))) {
+  const target = msg.guild.member(bot.users.get(react_to_me));
+  if (target && msg.isMemberMentioned(target)) {
     msg
       .react('640745183238946867')
       .then(() => msg.react('🍽'))
