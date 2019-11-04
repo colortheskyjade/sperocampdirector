@@ -1,9 +1,10 @@
+const lib = require('./lib.js');
 const auth = require('./auth.json');
-// LOL :C
-// const lib = require('./lib.js');
+const config = require('./config.json');
 const { Client, RichEmbed } = require('discord.js');
 
 const bot = new Client();
+const {reactToMention} = lib;
 
 // sorry dude
 const react_to_me = '173523956173766656';
@@ -34,16 +35,7 @@ bot.on('message', msg => {
   if (msg.author.bot) return;
 
   // TODO: refactor, this will be changed in v12
-  const target = msg.guild.member(bot.users.get(react_to_me));
-  if (target && msg.isMemberMentioned(target)) {
-    msg
-      .react('640745183238946867')
-      .then(() => msg.react('🍽'))
-      .catch(() =>
-        // TODO: possibly clear reactions
-        console.log('[ERROR] Failed to react properly with emojis.')
-      );
-  }
+  reactToMention(bot, msg, config.react_to_user_mentions);
 });
 
 bot.login(auth.token);
