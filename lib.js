@@ -82,13 +82,14 @@ const rollColors_ = async (author, channel, remaining) => {
     .then((msg) =>
       msg
         .awaitReactions(filter, {max: 1, time: 6000, errors: ['time']})
-        .then((collected) => {
+        .then(async (collected) => {
           const reaction = collected.first();
           if (reaction.emoji.name === '👍') {
-            return setColorRole_(author, channel, color);
+            await setColorRole_(author, channel, color);
           } else if (remaining > 0) {
-            return rollColors_(author, channel, remaining - 1);
+            await rollColors_(author, channel, remaining - 1);
           }
+          return Promise.resolve();
         })
     );
 };
