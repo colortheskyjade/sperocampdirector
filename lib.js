@@ -60,7 +60,7 @@ const voteButtons = (bot, msg) => {
 
 const setColorRole_ = async (author, channel, color) => {
   const guildMember = channel.guild.member(author);
-  let role = guildMember.roles.find((role) => {
+  const role = guildMember.roles.find((role) => {
     return role.name === author.tag;
   });
   if (role != undefined) {

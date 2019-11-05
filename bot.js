@@ -50,7 +50,11 @@ bot.on('message', (msg) => {
     msg.channel.id === config.bot_channel_id &&
     msg.content.startsWith('!gacha')
   ) {
-    if (noRefunds.has(msg.author.id)) {
+    const guildMember = msg.channel.guild.member(msg.author);
+    const p2w = guildMember.roles.some((role) => {
+      return role.name === 'p2w';
+    });
+    if (!p2w && noRefunds.has(msg.author.id)) {
       msg.channel.send(
         new RichEmbed()
           .setTitle('Sorry, no refunds.')
