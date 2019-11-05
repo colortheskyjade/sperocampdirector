@@ -3,7 +3,6 @@ const lib = require('./lib.js');
 const lodashId = require('lodash-id');
 const low = require('lowdb');
 const auth = require('./data/auth.json');
-const config = require('./data/config.json');
 const {Client, RichEmbed} = require('discord.js');
 
 const {
@@ -53,11 +52,11 @@ bot.on('message', (msg) => {
   if (msg.author.bot) return;
   debugMessage_(msg);
   registerUserActivity(db, msg);
-  reactToMention(bot, msg, config.react_to_user_mentions);
+  reactToMention(db, bot, msg);
 
   // Do this better later.
   if (msg.content.startsWith('Q: ')) {
-    yesOrNo(bot, msg);
+    yesOrNo(db, msg);
   } else if (msg.content.startsWith('Vote: ')) {
     voteButtons(bot, msg);
   } else if (

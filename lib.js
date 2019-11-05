@@ -16,12 +16,12 @@ const chainReaction_ = async (msg, emojis, error_callback = () => {}) => {
   return msg;
 };
 
-const reactToMention = (bot, msg, config) => {
+const reactToMention = (db, bot, msg) => {
+  const config = db.get('options.react_to_user_mentions').value();
   const targets = Object.keys(config)
     .map((id) => msg.guild.member(bot.users.get(id)))
     .filter(Boolean)
     .filter((user) => msg.isMemberMentioned(user));
-
   if (!targets.length) return;
 
   // Just pick one or else they could conflict/be spammy.
@@ -33,23 +33,8 @@ const reactToMention = (bot, msg, config) => {
   });
 };
 
-const yesOrNo = (bot, msg) => {
-  const answers = [
-    ['👍'],
-    ['👍'],
-    ['👌'],
-    ['👌'],
-    ['👎'],
-    ['👎'],
-    ['🤷'],
-    ['🇾', '🇪', '🇸'],
-    ['🇾', '🇪', '🇸'],
-    ['🇾', '🇪', '🇸'],
-    ['🇳', '🇴'],
-    ['🇳', '🇴'],
-    ['🇳', '🇴'],
-  ];
-
+const yesOrNo = (db, msg) => {
+  const answers = db.get('options.yes_no_answers').value()
   const reaction = answers[Math.floor(Math.random() * answers.length)];
   chainReaction_(msg, reaction);
 };
