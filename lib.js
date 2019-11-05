@@ -70,7 +70,7 @@ const rollColors_ = async (author, channel, db) => {
     const embed = new RichEmbed()
       .setTitle('Sorry, no refunds.')
       .setThumbnail('https://imgur.com/r6TbfOg.png');
-    msg.channel.send(embed);
+    channel.send(embed);
     return;
   }
   remaining -= 1;
