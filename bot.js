@@ -1,6 +1,6 @@
 const lib = require('./lib.js');
-const auth = require('./auth.json');
-const config = require('./config.json');
+const auth = require('.data/auth.json');
+const config = require('.data/config.json');
 const {Client, RichEmbed} = require('discord.js');
 
 const bot = new Client();
