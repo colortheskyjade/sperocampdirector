@@ -84,7 +84,7 @@ bot.on('message', (msg) => {
   } else if (msg.content.startsWith('Vote: ')) {
     voteButtons(bot, msg);
   } else if (
-    /* msg.channel.id === db.get('options.bot_channel_id').value() && */
+    msg.channel.id === db.get('options.bot_channel_id').value() &&
     msg.content.startsWith('!gacha')
   ) {
     if (
