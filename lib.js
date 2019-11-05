@@ -100,7 +100,6 @@ const rollColors_ = async (author, channel, remaining) => {
         .then((collected) => {
           const reaction = collected.first();
           if (reaction.emoji.name === '👍') {
-            console.log('SETTING COLOR ROLE');
             return setColorRole_(author, channel, color);
           } else if (remaining > 0) {
             return rollColors_(author, channel, remaining - 1);

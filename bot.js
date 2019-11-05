@@ -50,15 +50,15 @@ bot.on('message', (msg) => {
     msg.channel.id === config.bot_channel_id &&
     msg.content.startsWith('!gacha')
   ) {
-    // if (noRefunds.has(msg.author.id)) {
-    //   msg.channel.send(
-    //     new RichEmbed()
-    //       .setTitle('Sorry, no refunds.')
-    //       .setThumbnail('https://imgur.com/r6TbfOg.png')
-    //   );
-    //   return;
-    // }
-    // noRefunds.add(msg.author.id);
+    if (noRefunds.has(msg.author.id)) {
+      msg.channel.send(
+        new RichEmbed()
+          .setTitle('Sorry, no refunds.')
+          .setThumbnail('https://imgur.com/r6TbfOg.png')
+      );
+      return;
+    }
+    noRefunds.add(msg.author.id);
     colorGacha(bot, msg);
   }
 });
