@@ -65,7 +65,7 @@ const rollColors_ = async (author, channel, db) => {
     .get('campers')
     .find({id: author.id})
     .value();
-  let remaining = camper.gacha_tokens || 0;
+  let remaining = camper.gacha_tokens || 10; // :thinking:
   if (!remaining) {
     const embed = new RichEmbed()
       .setTitle('Sorry, no refunds.')
