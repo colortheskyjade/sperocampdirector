@@ -1,18 +1,28 @@
+const FileSync = require('lowdb/adapters/FileSync');
 const lib = require('./lib.js');
+const lodashId = require('lodash-id');
+const low = require('lowdb');
 const auth = require('./data/auth.json');
 const config = require('./data/config.json');
 const {Client, RichEmbed} = require('discord.js');
 
-const bot = new Client();
-const {colorGacha, reactToMention, voteButtons, yesOrNo} = lib;
-const CAMPERS = sqlite3.Database('./data/campers.sqlite');
+const {
+  colorGacha,
+  reactToMention,
+  registerUserActivity,
+  voteButtons,
+  yesOrNo,
+} = lib;
 
-let noRefunds;
+const bot = new Client();
+const adapter = new FileSync('./data/db.json');
+const db = low(adapter);
+
+db._.mixin(lodashId);
 
 bot.on('ready', () => {
   console.log(`[INFO] Logged in as ${bot.user.tag}.`);
   bot.user.setActivity('gacha x camping');
-  noRefunds = new Set();
 });
 
 bot.on('disconected', () => {
@@ -30,17 +40,20 @@ bot.on('error', function(err) {
   process.exit(1);
 });
 
-bot.on('message', (msg) => {
-  if (msg.author.bot) return;
-
-  reactToMention(bot, msg, config.react_to_user_mentions);
-
+const debugMessage_ = (msg) => {
   if (
     msg.author.id === '49395063955914752' &&
     msg.content.startsWith('!DEBUG')
   ) {
     msg.channel.send(new RichEmbed().setTitle('D E B U G'));
   }
+};
+
+bot.on('message', (msg) => {
+  if (msg.author.bot) return;
+  debugMessage_(msg);
+  registerUserActivity(db, msg);
+  reactToMention(bot, msg, config.react_to_user_mentions);
 
   // Do this better later.
   if (msg.content.startsWith('Q: ')) {
@@ -48,22 +61,10 @@ bot.on('message', (msg) => {
   } else if (msg.content.startsWith('Vote: ')) {
     voteButtons(bot, msg);
   } else if (
-    msg.channel.id === config.bot_channel_id &&
+    msg.channel.id === db.get('options.bot_channel_id').value() &&
     msg.content.startsWith('!gacha')
   ) {
-    const guildMember = msg.channel.guild.member(msg.author);
-    const p2w = guildMember.roles.some((role) => {
-      return role.name === 'p2w';
-    });
-    if (!p2w && noRefunds.has(msg.author.id)) {
-      const embed = new RichEmbed()
-        .setTitle('Sorry, no refunds.')
-        .setThumbnail('https://imgur.com/r6TbfOg.png');
-      msg.channel.send(embed);
-      return;
-    }
-    noRefunds.add(msg.author.id);
-    colorGacha(bot, msg);
+    colorGacha(db, msg);
   }
 });
 

@@ -87,7 +87,7 @@ const rollColors_ = async (author, channel, remaining) => {
     '👍 to apply or 🎲 to reroll'
   );
   embed.setColor(color.value);
-  embed.setFooter('No refunds allowed, rerolls left: ' + remaining);
+  embed.setFooter('Please be gentle! Rerolls left: ' + remaining);
   const filter = (reaction, user) => {
     return ['👍', '🎲'].includes(reaction.emoji.name) && user.id === author.id;
   };
@@ -108,15 +108,54 @@ const rollColors_ = async (author, channel, remaining) => {
     );
 };
 
-const colorGacha = (bot, msg) => {
+const colorGacha = (db, msg) => {
+  const p2w = msg.channel.guild.member(msg.author).roles.some((role) => {
+    return role.name === 'p2w';
+  });
+  const noRefunds = !!db
+    .get('campers')
+    .some({id: msg.author.id, used_gacha_token: true})
+    .value();
+
+  if (!p2w && noRefunds) {
+    const embed = new RichEmbed()
+      .setTitle('Sorry, no refunds.')
+      .setThumbnail('https://imgur.com/r6TbfOg.png');
+    msg.channel.send(embed);
+    return;
+  }
+
+  db.get('campers')
+    .find({id: msg.author.id})
+    .assign({used_gacha_token: true})
+    .write();
+
   rollColors_(msg.author, msg.channel, 7).catch((err) => {
     console.error(err);
   });
 };
 
+const registerUserActivity = (db, msg) => {
+  if (
+    !db
+      .get('campers')
+      .some({id: msg.author.id})
+      .value()
+  ) {
+    db.get('campers')
+      .push({id: msg.author.id})
+      .write();
+  }
+  db.get('campers')
+    .find({id: msg.author.id})
+    .assign({last_post_timestamp: msg.createdTimestamp})
+    .write();
+};
+
 module.exports = {
   colorGacha: colorGacha,
   reactToMention: reactToMention,
+  registerUserActivity: registerUserActivity,
   voteButtons: voteButtons,
   yesOrNo: yesOrNo,
 };
