@@ -55,11 +55,10 @@ bot.on('message', (msg) => {
       return role.name === 'p2w';
     });
     if (!p2w && noRefunds.has(msg.author.id)) {
-      msg.channel.send(
-        new RichEmbed()
-          .setTitle('Sorry, no refunds.')
-          .setThumbnail('https://imgur.com/r6TbfOg.png')
-      );
+      const embed = new RichEmbed()
+        .setTitle('Sorry, no refunds.')
+        .setThumbnail('https://imgur.com/r6TbfOg.png');
+      msg.channel.send(embed);
       return;
     }
     noRefunds.add(msg.author.id);
