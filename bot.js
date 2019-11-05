@@ -67,7 +67,11 @@ const clearGacha = (db, msg) => {
 };
 
 const resetGachaTokens = (db, msg) => {
-  db.get('campers').value().forEach((entry) => {entry.gacha_tokens = 10;});
+  db.get('campers')
+    .value()
+    .forEach((entry) => {
+      entry.gacha_tokens = 10;
+    });
   db.write();
   msg.channel.send(new RichEmbed().setTitle('Updating gacha tokens... done!'));
 };
@@ -83,10 +87,12 @@ bot.on('message', (msg) => {
     yesOrNo(db, msg);
   } else if (msg.content.startsWith('Vote: ')) {
     voteButtons(bot, msg);
-  } else if (
-    msg.channel.id === db.get('options.bot_channel_id').value() &&
-    msg.content.startsWith('!gacha')
-  ) {
+  } else if (msg.content.startsWith('!gacha')) {
+    const bot_channel =  db.get('options.bot_channel_id').value();
+    if (msg.channel.id !== bot_channel) {
+      msg.channel.send(`Use <#${bot_channel}> for \`!gacha\`.`);
+      return;
+    }
     if (
       msg.content.startsWith('!gacha clearall') &&
       msg.author.id === ADMIN_ID_
