@@ -23,7 +23,7 @@ const ADMIN_ID_ = '49395063955914752';
 
 bot.on('ready', () => {
   console.log(`[INFO] Logged in as ${bot.user.tag}.`);
-  bot.user.setActivity('gacha x camping');
+  bot.user.setActivity(' gacha x camping');
 });
 
 bot.on('disconected', () => {
@@ -55,17 +55,6 @@ const debugMessage_ = (db, msg) => {
   }
 };
 
-const clearGacha = (db, msg) => {
-  db.get('campers')
-    .filter({used_gacha_token: true})
-    .value()
-    .forEach((entry) => {
-      delete entry.used_gacha_token;
-    });
-  db.write();
-  msg.channel.send(new RichEmbed().setTitle('Clearing gacha tokens... done!'));
-};
-
 const resetGachaTokens = (db, msg) => {
   db.get('campers')
     .value()
@@ -93,11 +82,6 @@ bot.on('message', (msg) => {
       return;
     }
     if (
-      msg.content.startsWith('!gacha clearall') &&
-      msg.author.id === ADMIN_ID_
-    ) {
-      clearGacha(db, msg);
-    } else if (
       msg.content.startsWith('!gacha resettokens') &&
       msg.author.id === ADMIN_ID_
     ) {
