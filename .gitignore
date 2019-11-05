@@ -1,6 +1,5 @@
 # SECRETS OwO
-auth.json
-config.json
+data/
 
 # Logs
 logs

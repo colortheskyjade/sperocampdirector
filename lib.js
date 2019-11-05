@@ -1,4 +1,4 @@
-const colors = require('.data/colors.json');
+const colors = require('./colors.json');
 const {RichEmbed} = require('discord.js');
 
 const BLANK_FIELD_ = '\u200b';
