@@ -39,18 +39,26 @@ bot.on('error', function(err) {
   process.exit(1);
 });
 
-const debugMessage_ = (msg) => {
+const debugMessage_ = (db, msg) => {
   if (
     msg.author.id === '49395063955914752' &&
     msg.content.startsWith('!DEBUG')
   ) {
-    msg.channel.send(new RichEmbed().setTitle('D E B U G'));
+    const embed = new RichEmbed().setTitle('D E B U G');
+
+    if (msg.content.startsWith('!DEBUG gimme campers')) {
+      embed.setDescription(
+        '```' + JSON.stringify(db.get('campers').value(), null, 2) + '```'
+      );
+    }
+
+    msg.channel.send(embed);
   }
 };
 
 bot.on('message', (msg) => {
   if (msg.author.bot) return;
-  debugMessage_(msg);
+  debugMessage_(db, msg);
   registerUserActivity(db, msg);
   reactToMention(db, bot, msg);
 
