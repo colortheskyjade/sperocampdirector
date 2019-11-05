@@ -80,7 +80,6 @@ bot.on('message', (msg) => {
   if (msg.author.bot) return;
   debugMessage_(db, msg);
   registerUserActivity(db, msg);
-  reactToMention(db, bot, msg);
 
   // Do this better later.
   if (msg.content.startsWith('Q: ')) {
@@ -106,6 +105,8 @@ bot.on('message', (msg) => {
     } else {
       colorGacha(db, msg);
     }
+  } else {
+    reactToMention(db, bot, msg);
   }
 });
 
