@@ -57,7 +57,7 @@ bot.on('message', (msg) => {
     //       .setThumbnail('https://imgur.com/r6TbfOg.png')
     //   );
     //   return;
-    }
+    // }
     // noRefunds.add(msg.author.id);
     colorGacha(bot, msg);
   }
