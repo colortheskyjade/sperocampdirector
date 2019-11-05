@@ -7,13 +7,13 @@ const BLANK_FIELD_ = '\u200b';
  * React to emojis in sequence with optional callback.
  */
 const chainReaction_ = async (msg, emojis, error_callback = () => {}) => {
-  await emojis
+  return emojis
     .reduce(async (prev, emoji) => {
       await prev;
       return msg.react(emoji);
     }, Promise.resolve())
+    .then(() => msg)
     .catch(error_callback);
-  return msg;
 };
 
 const reactToMention = (db, bot, msg) => {
@@ -34,7 +34,7 @@ const reactToMention = (db, bot, msg) => {
 };
 
 const yesOrNo = (db, msg) => {
-  const answers = db.get('options.yes_no_answers').value()
+  const answers = db.get('options.yes_no_answers').value();
   const reaction = answers[Math.floor(Math.random() * answers.length)];
   chainReaction_(msg, reaction);
 };
@@ -60,7 +60,19 @@ const setColorRole_ = async (author, channel, color) => {
   });
 };
 
-const rollColors_ = async (author, channel, remaining) => {
+const rollColors_ = async (author, channel, db) => {
+  const camper = db
+    .get('campers')
+    .find({id: author.id})
+    .value();
+  let remaining = camper.gacha_tokens || 0;
+  if (!remaining) {
+    return;
+  }
+  remaining -= 1;
+  camper.gacha_tokens = remaining;
+  db.write();
+
   const color = colors.colors[Math.floor(Math.random() * colors.colors.length)];
   const embed = new RichEmbed();
   embed.setThumbnail('https://imgur.com/r6TbfOg.png');
@@ -72,53 +84,56 @@ const rollColors_ = async (author, channel, remaining) => {
     '👍 to apply or 🎲 to reroll'
   );
   embed.setColor(color.value);
-  embed.setFooter('Please be gentle! Rerolls left: ' + remaining);
+  embed.setFooter('5 minute timeout. Rerolls left: ' + remaining);
   const filter = (reaction, user) => {
     return ['👍', '🎲'].includes(reaction.emoji.name) && user.id === author.id;
   };
-  return channel
-    .send(embed)
-    .then((msg) => chainReaction_(msg, remaining ? ['👍', '🎲'] : ['👍']))
-    .then((msg) =>
-      msg
-        .awaitReactions(filter, {max: 1, time: 6000, errors: ['time']})
-        .then(async (collected) => {
-          const reaction = collected.first();
-          if (reaction.emoji.name === '👍') {
-            await setColorRole_(author, channel, color);
-          } else if (remaining > 0) {
-            await rollColors_(author, channel, remaining - 1);
-          }
-          return Promise.resolve();
-        })
-    );
+
+  const message = await channel.send(embed);
+  message
+    .awaitReactions(filter, {max: 1, time: 300000})
+    .then((collected) => {
+      console.log(collected);
+      console.log(message.id);
+      const reaction = collected.first();
+      let ret = Promise.resolve();
+      if (reaction) {
+        if (reaction.emoji.name === '👍') {
+          ret = setColorRole_(author, channel, color);
+        } else {
+          ret = rollColors_(author, channel, db);
+        }
+      }
+      message.clearReactions();
+      return ret;
+    })
+    .catch((err) => console.error(err));
+  return chainReaction_(message, remaining ? ['👍', '🎲'] : ['👍']);
 };
 
 const colorGacha = (db, msg) => {
-  const p2w = msg.channel.guild.member(msg.author).roles.some((role) => {
-    return role.name === 'p2w';
-  });
-  const noRefunds = !!db
-    .get('campers')
-    .some({id: msg.author.id, used_gacha_token: true})
-    .value();
+  // const p2w = msg.channel.guild.member(msg.author).roles.some((role) => {
+  //   return role.name === 'p2w';
+  // });
+  // const noRefunds = !!db
+  //   .get('campers')
+  //   .some({id: msg.author.id, used_gacha_token: true})
+  //   .value();
 
-  if (!p2w && noRefunds) {
-    const embed = new RichEmbed()
-      .setTitle('Sorry, no refunds.')
-      .setThumbnail('https://imgur.com/r6TbfOg.png');
-    msg.channel.send(embed);
-    return;
-  }
+  // if (!p2w && noRefunds) {
+  //   const embed = new RichEmbed()
+  //     .setTitle('Sorry, no refunds.')
+  //     .setThumbnail('https://imgur.com/r6TbfOg.png');
+  //   msg.channel.send(embed);
+  //   return;
+  // }
 
-  db.get('campers')
-    .find({id: msg.author.id})
-    .assign({used_gacha_token: true})
-    .write();
+  // db.get('campers')
+  //   .find({id: msg.author.id})
+  //   .assign({used_gacha_token: true})
+  //   .write();
 
-  rollColors_(msg.author, msg.channel, 7).catch((err) => {
-    console.error(err);
-  });
+  rollColors_(msg.author, msg.channel, db);
 };
 
 const registerUserActivity = (db, msg) => {

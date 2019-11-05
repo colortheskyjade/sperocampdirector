@@ -19,6 +19,8 @@ const db = low(adapter);
 
 db._.mixin(lodashId);
 
+const ADMIN_ID_ = '49395063955914752';
+
 bot.on('ready', () => {
   console.log(`[INFO] Logged in as ${bot.user.tag}.`);
   bot.user.setActivity('gacha x camping');
@@ -40,10 +42,7 @@ bot.on('error', function(err) {
 });
 
 const debugMessage_ = (db, msg) => {
-  if (
-    msg.author.id === '49395063955914752' &&
-    msg.content.startsWith('!DEBUG')
-  ) {
+  if (msg.author.id === ADMIN_ID_ && msg.content.startsWith('!DEBUG')) {
     const embed = new RichEmbed().setTitle('D E B U G');
 
     if (msg.content.startsWith('!DEBUG gimme campers')) {
@@ -54,6 +53,23 @@ const debugMessage_ = (db, msg) => {
 
     msg.channel.send(embed);
   }
+};
+
+const clearGacha = (db, msg) => {
+  db.get('campers')
+    .filter({used_gacha_token: true})
+    .value()
+    .forEach((entry) => {
+      delete entry.used_gacha_token;
+    });
+  db.write();
+  msg.channel.send(new RichEmbed().setTitle('Clearing gacha tokens... done!'));
+};
+
+const resetGachaTokens = (db, msg) => {
+  db.get('campers').value().forEach((entry) => {entry.gacha_tokens = 10;});
+  db.write();
+  msg.channel.send(new RichEmbed().setTitle('Updating gacha tokens... done!'));
 };
 
 bot.on('message', (msg) => {
@@ -71,7 +87,19 @@ bot.on('message', (msg) => {
     /* msg.channel.id === db.get('options.bot_channel_id').value() && */
     msg.content.startsWith('!gacha')
   ) {
-    colorGacha(db, msg);
+    if (
+      msg.content.startsWith('!gacha clearall') &&
+      msg.author.id === ADMIN_ID_
+    ) {
+      clearGacha(db, msg);
+    } else if (
+      msg.content.startsWith('!gacha resettokens') &&
+      msg.author.id === ADMIN_ID_
+    ) {
+      resetGachaTokens(db, msg);
+    } else {
+      colorGacha(db, msg);
+    }
   }
 });
 
