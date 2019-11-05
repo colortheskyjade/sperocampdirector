@@ -28,7 +28,7 @@ const reactToMention = (db, bot, msg) => {
   const sequence = config[targets[0].user.id];
 
   chainReaction_(msg, sequence, () => {
-    console.log('[ERROR] Failed to react properly with emojis, clearing.');
+    console.error('[ERROR] Failed to react properly with emojis, clearing.');
     msg.clearReactions();
   });
 };
@@ -67,6 +67,10 @@ const rollColors_ = async (author, channel, db) => {
     .value();
   let remaining = camper.gacha_tokens || 0;
   if (!remaining) {
+    const embed = new RichEmbed()
+      .setTitle('Sorry, no refunds.')
+      .setThumbnail('https://imgur.com/r6TbfOg.png');
+    msg.channel.send(embed);
     return;
   }
   remaining -= 1;
@@ -93,8 +97,6 @@ const rollColors_ = async (author, channel, db) => {
   message
     .awaitReactions(filter, {max: 1, time: 300000})
     .then((collected) => {
-      console.log(collected);
-      console.log(message.id);
       const reaction = collected.first();
       let ret = Promise.resolve();
       if (reaction) {
@@ -112,26 +114,17 @@ const rollColors_ = async (author, channel, db) => {
 };
 
 const colorGacha = (db, msg) => {
-  // const p2w = msg.channel.guild.member(msg.author).roles.some((role) => {
-  //   return role.name === 'p2w';
-  // });
-  // const noRefunds = !!db
-  //   .get('campers')
-  //   .some({id: msg.author.id, used_gacha_token: true})
-  //   .value();
-
-  // if (!p2w && noRefunds) {
-  //   const embed = new RichEmbed()
-  //     .setTitle('Sorry, no refunds.')
-  //     .setThumbnail('https://imgur.com/r6TbfOg.png');
-  //   msg.channel.send(embed);
-  //   return;
-  // }
-
-  // db.get('campers')
-  //   .find({id: msg.author.id})
-  //   .assign({used_gacha_token: true})
-  //   .write();
+  if (
+    msg.channel.guild.member(msg.author).roles.some((role) => {
+      return role.name === 'p2w';
+    })
+  ) {
+    db
+      .get('campers')
+      .find({id: msg.author.id})
+      .value().gacha_tokens = 10;
+    db.write();
+  }
 
   rollColors_(msg.author, msg.channel, db);
 };
