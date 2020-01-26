@@ -17,6 +17,18 @@ db._.mixin(lodashId);
 // :^)
 const ADMIN_ID_ = '49395063955914752';
 
+// Returns true if should return early / not admin.
+const notAdmin = (msg) => {
+  if (msg.author.id !== ADMIN_ID_) {
+    const embed = new RichEmbed()
+      .setTitle('Hey...')
+      .setDescription(`You're not the boss of me! :C`);
+    msg.channel.send(embed);
+    return true;
+  }
+  return false;
+}
+
 bot.on('ready', () => {
   console.log(`[INFO] Logged in as ${bot.user.tag}.`);
   bot.user.setActivity(' with your heart :3c');
@@ -40,6 +52,13 @@ bot.on('error', function(err) {
 bot.on('message', (msg) => {
   if (msg.author.bot) return;
   ActivityMonitor.registerUserActivity(db, msg);
+
+  if (
+    msg.channel.id !== db.get('options.bot_channel_id').value() &&
+    msg.channel.id !== db.get('options.admin_channel_id').value()
+  ) {
+    return;
+  }
   if (!msg.content.startsWith(prefix)) return;
 
   const tokens = msg.content
@@ -49,14 +68,12 @@ bot.on('message', (msg) => {
 
   switch (tokens[0]) {
     case 'config':
-      if (msg.author.id !== ADMIN_ID_) {
-        const embed = new RichEmbed()
-          .setTitle('Hey...')
-          .setDescription(`You're not the boss of me! :C`);
-        msg.channel.send(embed);
-        return;
-      }
+      if(notAdmin(msg)) return;
       ConfigManager.execute(db, msg, tokens);
+      break;
+    case 'active':
+      if(notAdmin(msg)) return;
+      ActivityMonitor.execute(db, msg, tokens);
       break;
     default:
       const embed = new RichEmbed()

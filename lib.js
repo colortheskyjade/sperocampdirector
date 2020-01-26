@@ -35,6 +35,76 @@ class ActivityMonitor {
       .assign({last_post_timestamp: msg.createdTimestamp})
       .write();
   }
+
+  static execute(db, msg, tokens) {
+    let embed = new RichEmbed();
+
+    switch (tokens[1]) {
+      case 'run':
+        ActivityMonitor.setActiveRoles(db, msg.member.guild);
+      default:
+        break;
+    }
+  }
+
+  static setActiveRoles(db, guild) {
+    const campers = db
+      .get('campers')
+      .filter((camper) => {
+        return (
+          camper.last_post_timestamp >
+          new Date().setDate(new Date().getDate() - 30)
+        );
+      })
+      .value();
+
+    const role_id = db.get('options.active_role_id').value();
+    if (!role_id) {
+      // ERROR
+      return;
+    }
+
+    const prev_active = new Set(ActivityMonitor._findRoleUsers(role_id, guild));
+    const curr_active = new Set(campers.map((c) => c.id));
+
+    const to_add = [...curr_active].filter((c) => !prev_active.has(c));
+    const to_remove = [...prev_active].filter((c) => !curr_active.has(c));
+
+    if (to_add.length) {
+      console.log('[INFO] Adding active role to : ' + to_add.toString());
+    }
+    if (to_remove.length) {
+      console.log('[INFO] Removing active role from : ' + to_remove.toString());
+    }
+
+    to_add.forEach((id) => ActivityMonitor._addRole(id, role_id, guild));
+    to_remove.forEach((id) => ActivityMonitor._removeRole(id, role_id, guild));
+  }
+
+  // *** ROLE MANIPULATION **
+  // Could be refactored if needed.
+  static _findRoleUsers(role_id, guild) {
+    const role = guild.roles.get(role_id);
+
+    if (!role) return [];
+    return role.members.map((m) => m.user.id);
+  }
+
+  static _addRole(user_id, role_id, guild) {
+    const guild_member = guild.member(user_id);
+    const role = guild.roles.get(role_id);
+
+    if (!guild_member || !role) return;
+    guild_member.addRole(role);
+  }
+
+  static _removeRole(user_id, role_id, guild) {
+    const guild_member = guild.member(user_id);
+    const role = guild.roles.get(role_id);
+
+    if (!guild_member || !role) return;
+    guild_member.removeRole(role);
+  }
 }
 
 class ConfigManager {
@@ -75,7 +145,7 @@ class ConfigManager {
       }
       // *** SETTING CHANNELS
       case 'botchannel': {
-        ConfigManager._getChannel(
+        ConfigManager.getChannel(
           embed,
           db,
           'options.bot_channel_id',
@@ -93,7 +163,7 @@ class ConfigManager {
           );
           break;
         }
-        ConfigManager._setChannel(
+        ConfigManager.setChannel(
           embed,
           db,
           'options.bot_channel_id',
@@ -103,7 +173,7 @@ class ConfigManager {
         break;
       }
       case 'adminchannel': {
-        ConfigManager._getChannel(
+        ConfigManager.getChannel(
           embed,
           db,
           'options.admin_channel_id',
@@ -121,11 +191,35 @@ class ConfigManager {
           );
           break;
         }
-        ConfigManager._setChannel(
+        ConfigManager.setChannel(
           embed,
           db,
           'options.admin_channel_id',
           'admin channel',
+          tokens[2]
+        );
+        break;
+      }
+      // *** SETTING ROLES
+      case 'activerole': {
+        ConfigManager.getRole(
+          embed,
+          db,
+          'options.active_role_id',
+          'active role'
+        );
+        break;
+      }
+      case 'setactiverole': {
+        if (tokens.length < 3) {
+          errorEmbed(embed, 'No role provided', null, 'Give me a role :3c');
+          break;
+        }
+        ConfigManager.setRole(
+          embed,
+          db,
+          'options.active_role_id',
+          'active role',
           tokens[2]
         );
         break;
@@ -137,30 +231,46 @@ class ConfigManager {
     msg.channel.send(embed);
   }
 
-  static _getChannel(embed, db, key, name) {
-    const channel_id = db.get(key).value();
-    embed.setDescription(`The current ${name} is <#${channel_id}>.`);
-    embed.setFooter(`channel_id: ${channel_id}`);
+  static _getKey(embed, db, key, name, prefix) {
+    const value_id = db.get(key).value();
+    embed.setDescription(`The current ${name} is <${prefix}${value_id}>.`);
+    embed.setFooter(`ID: ${value_id}`);
   }
 
-  static _setChannel(embed, db, key, name, channel_tag) {
-    const channel_id = (channel_tag.match(/<#(\d+)>/) || [null, null])[1];
+  static _setKey(embed, db, key, name, value_str, match_str) {
+    console.log(value_str);
+    const value_id = (value_str.match(match_str) || [null, null])[1];
     // TODO: Add real validation.
-    if (channel_id) {
-      db.set(key, channel_id).write();
-      embed.setDescription(`Setting ${name} to ${channel_tag}.`);
-      embed.setFooter(`channel_id: ${channel_id}`);
+    if (value_id) {
+      db.set(key, value_id).write();
+      embed.setDescription(`Setting ${name} to ${value_str}.`);
+      embed.setFooter(`ID: ${value_id}`);
     } else {
       errorEmbed(
         embed,
-        'Channel not found',
-        "Are you sure you're mentioning it?",
+        'ID not found',
+        "Are you sure you're using mentions?",
         null
       );
     }
   }
-}
 
+  static getChannel(embed, db, key, name) {
+    ConfigManager._getKey(embed, db, key, name, '#');
+  }
+
+  static setChannel(embed, db, key, name, value_str) {
+    ConfigManager._setKey(embed, db, key, name, value_str, /<#(\d+)>/);
+  }
+
+  static getRole(embed, db, key, name) {
+    ConfigManager._getKey(embed, db, key, name, '@&');
+  }
+
+  static setRole(embed, db, key, name, value_str) {
+    ConfigManager._setKey(embed, db, key, name, value_str, /<@&(\d+)>/);
+  }
+}
 
 module.exports = {
   ActivityMonitor: ActivityMonitor,
