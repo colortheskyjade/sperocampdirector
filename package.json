@@ -9,8 +9,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "cron": "^1.8.2",
     "discord.js": "^11.5.1",
     "lodash-id": "^0.14.0",
     "lowdb": "^1.0.0"
+  },
+  "devDependencies": {
+    "@discordjs/uws": "^10.149.0"
   }
 }

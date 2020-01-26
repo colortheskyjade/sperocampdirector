@@ -3,6 +3,7 @@ const lib = require('./lib.js');
 const lodashId = require('lodash-id');
 const low = require('lowdb');
 const auth = require('./data/auth.json');
+const {CronJob} = require('cron');
 const {Client, RichEmbed} = require('discord.js');
 
 const {ActivityMonitor, ConfigManager} = lib;
@@ -27,7 +28,7 @@ const notAdmin = (msg) => {
     return true;
   }
   return false;
-}
+};
 
 bot.on('ready', () => {
   console.log(`[INFO] Logged in as ${bot.user.tag}.`);
@@ -68,11 +69,11 @@ bot.on('message', (msg) => {
 
   switch (tokens[0]) {
     case 'config':
-      if(notAdmin(msg)) return;
+      if (notAdmin(msg)) return;
       ConfigManager.execute(db, msg, tokens);
       break;
     case 'active':
-      if(notAdmin(msg)) return;
+      if (notAdmin(msg)) return;
       ActivityMonitor.execute(db, msg, tokens);
       break;
     default:
@@ -85,4 +86,13 @@ bot.on('message', (msg) => {
   }
 });
 
+const cronjob = new CronJob('00 00 00 * * *', function() {
+  // This is misleading, since the bot's really only configured to work on 
+  // one server.
+  bot.guilds.array.forEach((guild) =>
+    ActivityManager.setActiveRoles(db, guild)
+  );
+});
+
+job.start();
 bot.login(auth.token);
