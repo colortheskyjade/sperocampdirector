@@ -298,7 +298,7 @@ class ColorManager {
         name: msg.author.tag,
         color: color,
       };
-      channel.guild.createRole(roleData, 'Colors').then((role) => {
+      msg.channel.guild.createRole(roleData, 'Colors').then((role) => {
         guildMember.addRole(role, 'Colors');
       });
     }
