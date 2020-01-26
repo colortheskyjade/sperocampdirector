@@ -238,7 +238,6 @@ class ConfigManager {
   }
 
   static _setKey(embed, db, key, name, value_str, match_str) {
-    console.log(value_str);
     const value_id = (value_str.match(match_str) || [null, null])[1];
     // TODO: Add real validation.
     if (value_id) {
