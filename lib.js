@@ -291,8 +291,6 @@ class ColorManager {
     const role = guildMember.roles.find((role) => {
       return role.name === msg.author.tag;
     });
-    console.log(role);
-    console.log(color);
     if (role != undefined) {
       role.setColor(color);
     } else {
