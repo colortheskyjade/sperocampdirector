@@ -79,6 +79,19 @@ class ActivityMonitor {
 
     to_add.forEach((id) => ActivityMonitor._addRole(id, role_id, guild));
     to_remove.forEach((id) => ActivityMonitor._removeRole(id, role_id, guild));
+
+    if (
+      db.get('options.display_active_member_run').value() &&
+      db.get('options.admin_channel_id').value()
+    ) {
+      guild.channels
+        .get(db.get('options.admin_channel_id').value())
+        .send(
+          new RichEmbed()
+            .setDescription('Ran nightly role update.')
+            .setFooter('Beep boop')
+        );
+    }
   }
 
   // *** ROLE MANIPULATION **
@@ -139,7 +152,7 @@ class ConfigManager {
         db.set(tokens[2], tokens[3]).write();
         embed.setTitle(`Setting ${tokens[2]} to ${tokens[3]}...`);
         embed.setDescription(
-          `Previously \`${token[2]}\` was set to:\n ` + '```' + prev + '```'
+          `Previously \`${tokens[2]}\` was set to:\n ` + '```' + prev + '```'
         );
         break;
       }

@@ -87,12 +87,12 @@ bot.on('message', (msg) => {
 });
 
 const cronjob = new CronJob('00 00 00 * * *', function() {
-  // This is misleading, since the bot's really only configured to work on 
+  // This is misleading, since the bot's really only configured to work on
   // one server.
   bot.guilds.array.forEach((guild) =>
     ActivityManager.setActiveRoles(db, guild)
   );
 });
 
-job.start();
+cronjob.start();
 bot.login(auth.token);
