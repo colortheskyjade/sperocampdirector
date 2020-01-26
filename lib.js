@@ -284,7 +284,43 @@ class ConfigManager {
   }
 }
 
+class ColorManager {
+  static execute(msg, tokens) {
+    const color = tokens[1];
+    const guildMember = msg.channel.guild.member(msg.author);
+    const role = guildMember.roles.find((role) => {
+      return role.name === msg.author.tag;
+    });
+    console.log(role);
+    console.log(color);
+    if (role != undefined) {
+      role.setColor(color);
+    } else {
+      const roleData = {
+        name: msg.author.tag,
+        color: color,
+      };
+      channel.guild.createRole(roleData, 'Colors').then((role) => {
+        guildMember.addRole(role, 'Colors');
+      });
+    }
+    const embed = new RichEmbed();
+    embed.setColor(color);
+    embed.setTitle('Your color has been updated!');
+    embed.setDescription(
+      `I set your color to \`${color}\` based on your request. ` +
+        `If this wasn't what you wanted, try again! O:`
+    );
+    embed.setFooter(
+      "P.S. No spaces please I'm shy. Colors chosen based on however " +
+        'Discord resolves strings to colors. I suggest hex values.'
+    );
+    msg.channel.send(embed);
+  }
+}
+
 module.exports = {
   ActivityMonitor: ActivityMonitor,
+  ColorManager: ColorManager,
   ConfigManager: ConfigManager,
 };

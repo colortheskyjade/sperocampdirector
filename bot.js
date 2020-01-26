@@ -6,7 +6,7 @@ const auth = require('./data/auth.json');
 const {CronJob} = require('cron');
 const {Client, RichEmbed} = require('discord.js');
 
-const {ActivityMonitor, ConfigManager} = lib;
+const {ActivityMonitor, ColorManager, ConfigManager} = lib;
 
 const adapter = new FileSync('./data/db.json');
 const bot = new Client();
@@ -54,6 +54,9 @@ bot.on('message', (msg) => {
   if (msg.author.bot) return;
   ActivityMonitor.registerUserActivity(db, msg);
 
+  // *** Passive bot interaction
+
+  // *** Active bot interaction
   if (
     msg.channel.id !== db.get('options.bot_channel_id').value() &&
     msg.channel.id !== db.get('options.admin_channel_id').value()
@@ -75,6 +78,9 @@ bot.on('message', (msg) => {
     case 'active':
       if (notAdmin(msg)) return;
       ActivityMonitor.execute(db, msg, tokens);
+      break;
+    case 'color':
+      ColorManager.execute(msg, tokens);
       break;
     default:
       const embed = new RichEmbed()
