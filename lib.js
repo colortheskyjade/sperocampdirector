@@ -3,6 +3,107 @@ const {RichEmbed} = require('discord.js');
 
 const BLANK_FIELD_ = '\u200b';
 
+// Returns an embed for an error message.
+const errorEmbed = (title, body, footer) => {
+  const embed = new RichEmbed().setColor('#ff0000'); // Red
+  if (title) {
+    embed.setTitle(title);
+  }
+  if (body) {
+    embed.setDescription(body);
+  }
+  if (footer) {
+    embed.setFooter(footer);
+  }
+  return embed;
+};
+
+class ActivityMonitor {
+  /** Log last post time. Not enough users to care about throttling. */
+  static registerUserActivity(db, msg) {
+    if (
+      !db
+        .get('campers')
+        .some({id: msg.author.id})
+        .value()
+    ) {
+      db.get('campers')
+        .push({id: msg.author.id})
+        .write();
+    }
+    db.get('campers')
+      .find({id: msg.author.id})
+      .assign({last_post_timestamp: msg.createdTimestamp})
+      .write();
+  }
+}
+
+class ConfigManager {
+  static execute(db, msg, tokens) {
+    let embed = new RichEmbed();
+
+    switch (tokens[1]) {
+      // *** GENERIC GET/SET ***
+      // Fairly dangerous! O -O
+      case 'adminget': {
+        if (!tokens[2]) {
+          return;
+        }
+        if (tokens[2] === 'all') {
+          embed.setTitle('Fetching the world...');
+          embed.setDescription(
+            '```' + JSON.stringify(db.value(), null, 2) + '```'
+          );
+        } else {
+          embed.setTitle(`Fetching ${tokens[2]}...`);
+          embed.setDescription(
+            '```' + JSON.stringify(db.get(tokens[2]).value(), null, 2) + '```'
+          );
+        }
+        break;
+      }
+      case 'adminset': {
+        if (!tokens[2] || !tokens[3]) {
+          return;
+        }
+        const prev = db.get(tokens[2]).value();
+        db.set(tokens[2], tokens[3]).write();
+        embed.setTitle(`Setting ${tokens[2]} to ${tokens[3]}...`);
+        embed.setDescription(
+          `Previously \`${token[2]}\` was set to:\n ` + '```' + prev + '```'
+        );
+        break;
+      }
+      // *** SETTING CHANNELS
+      case 'botchannel': {
+        const channel = db.get('options.bot_channel_id').value();
+        embed.setDescription(`The current bot channel is <#${channel}>.`);
+        embed.setFooter(`channel_id: ${channel}`);
+        break;
+      }
+      case 'setbotchannel': {
+        const channel = tokens[2].match(/<#(\d+)>/)[1];
+        if (channel) {
+          db.set('options.bot_channel_id', channel).write();
+          embed.setDescription(`Setting bot channel to ${tokens[2]}.`);
+          embed.setFooter(`channel_id: ${channel}`);
+        } else {
+          embed = errorEmbed(
+            'Channel not found',
+            "Given channel not found, are you sure you're mentioning it?",
+            null
+          );
+        }
+        break;
+      }
+      default:
+        return;
+    }
+
+    msg.channel.send(embed);
+  }
+}
+
 /**
  * React to emojis in sequence with optional callback.
  */
@@ -129,27 +230,11 @@ const colorGacha = (db, msg) => {
   rollColors_(msg.author, msg.channel, db);
 };
 
-const registerUserActivity = (db, msg) => {
-  if (
-    !db
-      .get('campers')
-      .some({id: msg.author.id})
-      .value()
-  ) {
-    db.get('campers')
-      .push({id: msg.author.id})
-      .write();
-  }
-  db.get('campers')
-    .find({id: msg.author.id})
-    .assign({last_post_timestamp: msg.createdTimestamp})
-    .write();
-};
-
 module.exports = {
+  ActivityMonitor: ActivityMonitor,
+  ConfigManager: ConfigManager,
   colorGacha: colorGacha,
   reactToMention: reactToMention,
-  registerUserActivity: registerUserActivity,
   voteButtons: voteButtons,
   yesOrNo: yesOrNo,
 };

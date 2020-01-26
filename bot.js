@@ -6,19 +6,22 @@ const auth = require('./data/auth.json');
 const {Client, RichEmbed} = require('discord.js');
 
 const {
+  ActivityMonitor,
+  ConfigManager,
   colorGacha,
   reactToMention,
-  registerUserActivity,
   voteButtons,
   yesOrNo,
 } = lib;
 
-const bot = new Client();
 const adapter = new FileSync('./data/db.json');
+const bot = new Client();
 const db = low(adapter);
+const prefix = '!!';
 
 db._.mixin(lodashId);
 
+// :^)
 const ADMIN_ID_ = '49395063955914752';
 
 bot.on('ready', () => {
@@ -42,12 +45,19 @@ bot.on('error', function(err) {
 });
 
 const debugMessage_ = (db, msg) => {
+  if (msg.author.id !== ADMIN_ID_) return;
+
   if (msg.author.id === ADMIN_ID_ && msg.content.startsWith('!DEBUG')) {
     const embed = new RichEmbed().setTitle('D E B U G');
 
+    let prefix = '!DEBUG repeat ';
     if (msg.content.startsWith('!DEBUG gimme campers')) {
       embed.setDescription(
         '```' + JSON.stringify(db.get('campers').value(), null, 2) + '```'
+      );
+    } else if (msg.content.startsWith(prefix)) {
+      embed.setDescription(
+        '```' + msg.content.slice(prefix.length).match(/<#(\d+)>/)[1] + '```'
       );
     }
 
@@ -55,43 +65,60 @@ const debugMessage_ = (db, msg) => {
   }
 };
 
-const resetGachaTokens = (db, msg) => {
-  db.get('campers')
-    .value()
-    .forEach((entry) => {
-      entry.gacha_tokens = 10;
-    });
-  db.write();
-  msg.channel.send(new RichEmbed().setTitle('Updating gacha tokens... done!'));
-};
-
 bot.on('message', (msg) => {
   if (msg.author.bot) return;
-  debugMessage_(db, msg);
-  registerUserActivity(db, msg);
+  ActivityMonitor.registerUserActivity(db, msg);
+  if (!msg.content.startsWith(prefix)) return;
 
-  // Do this better later.
-  if (msg.content.startsWith('Q: ')) {
-    yesOrNo(db, msg);
-  } else if (msg.content.startsWith('Vote: ')) {
-    voteButtons(bot, msg);
-  } else if (msg.content.startsWith('!gacha')) {
-    const bot_channel =  db.get('options.bot_channel_id').value();
-    if (msg.channel.id !== bot_channel) {
-      msg.channel.send(`Use <#${bot_channel}> for \`!gacha\`.`);
+  const tokens = msg.content
+    .slice(prefix.length)
+    .trim()
+    .split(/\s+/);
+
+  switch (tokens[0]) {
+    case 'config':
+      if (msg.author.id !== ADMIN_ID_) {
+        const embed = new RichEmbed().setTitle('Hey...').setDescription(
+          `You're not the boss of me! :C`
+        );
+        msg.channel.send(embed);
+        return;
+      }
+      ConfigManager.execute(db, msg, tokens);
+      break;
+    default:
+      const embed = new RichEmbed()
+        .setTitle('Error: Unrecognized Command')
+        .setDescription('```' + msg.content + '```')
+        .setColor('#ff0000'); // Red
+      msg.channel.send(embed);
       return;
-    }
-    if (
-      msg.content.startsWith('!gacha resettokens') &&
-      msg.author.id === ADMIN_ID_
-    ) {
-      resetGachaTokens(db, msg);
-    } else {
-      colorGacha(db, msg);
-    }
-  } else {
-    reactToMention(db, bot, msg);
   }
+
+  //   debugMessage_(db, msg);
+
+  //   // Do this better later.
+  //   if (msg.content.startsWith('Q: ')) {
+  //     yesOrNo(db, msg);
+  //   } else if (msg.content.startsWith('Vote: ')) {
+  //     voteButtons(bot, msg);
+  //   } else if (msg.content.startsWith('!gacha')) {
+  //     const bot_channel =  db.get('options.bot_channel_id').value();
+  //     if (msg.channel.id !== bot_channel) {
+  //       msg.channel.send(`Use <#${bot_channel}> for \`!gacha\`.`);
+  //       return;
+  //     }
+  //     if (
+  //       msg.content.startsWith('!gacha resettokens') &&
+  //       msg.author.id === ADMIN_ID_
+  //     ) {
+  //       resetGachaTokens(db, msg);
+  //     } else {
+  //       colorGacha(db, msg);
+  //     }
+  //   } else {
+  //     reactToMention(db, bot, msg);
+  //   }
 });
 
 bot.login(auth.token);
